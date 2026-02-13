@@ -9,8 +9,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
+
+const logo = require('../assets/spherag.png');
 
 export default function LoginScreen() {
   const {login} = useAuth();
@@ -44,7 +47,7 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Spherag</Text>
+        <Image source={logo} style={styles.logo} resizeMode="contain" />
         <Text style={styles.subtitle}>Inicia sesion</Text>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -96,11 +99,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
+  logo: {
+    width: 180,
+    height: 60,
+    alignSelf: 'center',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
@@ -127,7 +130,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#243677',
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',

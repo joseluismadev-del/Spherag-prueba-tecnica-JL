@@ -6,9 +6,28 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  Image,
 } from 'react-native';
 import {useAuth} from '../context/AuthContext';
+
+const logo = require('../assets/spherag2.png');
 import {getFincas} from '../services/fincasService';
+
+function formatDate(dateString) {
+  if (!dateString) {
+    return '--';
+  }
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return dateString;
+  }
+}
 
 export default function HomeScreen({navigation}) {
   const {token, logout} = useAuth();
@@ -55,27 +74,27 @@ export default function HomeScreen({navigation}) {
         </Text>
         {item.favourite && <Text style={styles.star}>★</Text>}
       </View>
-      {!!item.description && (
-        <Text style={styles.cardDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-      )}
-      <Text style={styles.cardCountry}>{item.country}</Text>
+      <Text style={styles.cardDate}>
+        Creada el {formatDate(item.createdDate)}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mis Fincas</Text>
-        <TouchableOpacity onPress={logout} activeOpacity={0.8}>
-          <Text style={styles.logoutText}>Cerrar sesion</Text>
-        </TouchableOpacity>
+        <View style={styles.headerSide} />
+        <Image source={logo} style={styles.headerLogo} resizeMode="contain" />
+        <View style={styles.headerSide}>
+          <TouchableOpacity onPress={logout} activeOpacity={0.8}>
+            <Text style={styles.logoutText}>Cerrar sesion</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#4caf50" />
+          <ActivityIndicator size="large" color="#243677" />
         </View>
       ) : error ? (
         <View style={styles.center}>
@@ -107,15 +126,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#4caf50',
+    backgroundColor: '#243677',
     paddingHorizontal: 16,
     paddingVertical: 14,
     paddingTop: 48,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+  headerSide: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  headerLogo: {
+    width: 130,
+    height: 36,
   },
   logoutText: {
     color: '#fff',
@@ -135,7 +157,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#243677',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 24,
@@ -175,14 +197,9 @@ const styles = StyleSheet.create({
     color: '#ffc107',
     marginLeft: 8,
   },
-  cardDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 6,
-  },
-  cardCountry: {
+  cardDate: {
     fontSize: 13,
     color: '#999',
-    marginTop: 6,
+    marginTop: 8,
   },
 });

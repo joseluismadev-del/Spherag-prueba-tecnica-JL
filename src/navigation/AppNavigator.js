@@ -19,7 +19,7 @@ export default function AppNavigator() {
         component={AtlasListScreen}
         options={({route}) => ({
           title: route.params?.fincaName ?? 'Atlas',
-          headerStyle: {backgroundColor: '#4caf50'},
+          headerStyle: {backgroundColor: '#243677'},
           headerTintColor: '#fff',
           headerTitleStyle: {fontWeight: '600'},
         })}
@@ -29,7 +29,7 @@ export default function AppNavigator() {
         component={AtlasDetailScreen}
         options={({route}) => ({
           title: route.params?.atlasName ?? 'Detalle Atlas',
-          headerStyle: {backgroundColor: '#4caf50'},
+          headerStyle: {backgroundColor: '#243677'},
           headerTintColor: '#fff',
           headerTitleStyle: {fontWeight: '600'},
         })}

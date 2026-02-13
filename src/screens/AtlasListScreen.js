@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -10,45 +10,78 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {getAtlasList} from '../services/atlasService';
 
-function StatusDot({status}) {
-  const color =
-    status === 'Online'
-      ? '#4caf50'
-      : status === 'Offline'
-        ? '#f44336'
-        : '#ff9800';
-  return <View style={[styles.dot, {backgroundColor: color}]} />;
+const PAGE_SIZE = 10;
+
+function formatDate(dateString) {
+  if (!dateString) {
+    return '--';
+  }
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return dateString;
+  }
 }
 
 export default function AtlasListScreen({navigation, route}) {
   const {fincaId, fincaName} = route.params;
   const {token} = useAuth();
-  const [data, setData] = useState(null);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const pageRef = useRef(1);
 
-  const loadAtlas = useCallback(async () => {
-    try {
-      setError(null);
-      const result = await getAtlasList(token, fincaId);
-      setData(result);
-    } catch (e) {
-      setError(e.message || 'Error al cargar los dispositivos Atlas');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [token, fincaId]);
+  const loadAtlas = useCallback(
+    async (page = 1, append = false) => {
+      try {
+        setError(null);
+        const result = await getAtlasList(token, fincaId, page, PAGE_SIZE);
+        const newItems = result?.items ?? [];
+
+        if (append) {
+          setItems(prev => [...prev, ...newItems]);
+        } else {
+          setItems(newItems);
+        }
+
+        setHasMore(newItems.length === PAGE_SIZE);
+        pageRef.current = page;
+      } catch (e) {
+        setError(e.message || 'Error al cargar los dispositivos Atlas');
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
+      }
+    },
+    [token, fincaId],
+  );
 
   useEffect(() => {
-    loadAtlas();
+    loadAtlas(1);
   }, [loadAtlas]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    loadAtlas();
+    setHasMore(true);
+    loadAtlas(1);
   }, [loadAtlas]);
+
+  const onEndReached = useCallback(() => {
+    if (loadingMore || !hasMore) {
+      return;
+    }
+    setLoadingMore(true);
+    loadAtlas(pageRef.current + 1, true);
+  }, [loadAtlas, loadingMore, hasMore]);
 
   const renderItem = ({item}) => (
     <TouchableOpacity
@@ -61,19 +94,13 @@ export default function AtlasListScreen({navigation, route}) {
           atlasName: item.name,
         })
       }>
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleRow}>
-          <StatusDot status={item.status} />
-          <Text style={styles.cardName} numberOfLines={1}>
-            {item.name}
-          </Text>
-        </View>
-        {item.isAtlasTwo && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Atlas 2</Text>
-          </View>
-        )}
-      </View>
+      <Text style={styles.cardName} numberOfLines={1}>
+        {item.name}
+      </Text>
+      <Text style={styles.cardImei}>IMEI: {item.imei ?? '--'}</Text>
+      <Text style={styles.cardDate}>
+        Expira: {formatDate(item.expirationDate)}
+      </Text>
       <View style={styles.cardStats}>
         <Text style={styles.stat}>Bateria: {item.battery ?? '--'}%</Text>
         <Text style={styles.stat}>Senal: {item.signal ?? '--'}%</Text>
@@ -84,7 +111,7 @@ export default function AtlasListScreen({navigation, route}) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4caf50" />
+        <ActivityIndicator size="large" color="#243677" />
       </View>
     );
   }
@@ -102,12 +129,23 @@ export default function AtlasListScreen({navigation, route}) {
 
   return (
     <FlatList
-      data={data?.items ?? []}
+      data={items}
       keyExtractor={item => String(item.imei)}
       renderItem={renderItem}
       contentContainerStyle={styles.list}
       onRefresh={onRefresh}
       refreshing={refreshing}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.3}
+      ListFooterComponent={
+        loadingMore ? (
+          <ActivityIndicator
+            style={styles.footer}
+            size="small"
+            color="#243677"
+          />
+        ) : null
+      }
       ListEmptyComponent={
         <View style={styles.center}>
           <Text style={styles.emptyText}>
@@ -134,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#243677',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 24,
@@ -165,39 +203,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
   cardName: {
     fontSize: 17,
     fontWeight: '600',
     color: '#333',
-    flex: 1,
   },
-  badge: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginLeft: 8,
+  cardImei: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 4,
   },
-  badgeText: {
-    color: '#1565c0',
-    fontSize: 12,
-    fontWeight: '600',
+  cardDate: {
+    fontSize: 13,
+    color: '#999',
+    marginTop: 2,
   },
   cardStats: {
     flexDirection: 'row',
@@ -207,5 +226,8 @@ const styles = StyleSheet.create({
   stat: {
     fontSize: 14,
     color: '#666',
+  },
+  footer: {
+    paddingVertical: 16,
   },
 });

@@ -62,7 +62,7 @@ export default function AtlasDetailScreen({route}) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4caf50" />
+        <ActivityIndicator size="large" color="#243677" />
       </View>
     );
   }
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#4caf50',
+    backgroundColor: '#243677',
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 24,

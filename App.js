@@ -11,7 +11,7 @@ function AppContent() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color="#243677" />
       </View>
     );
   }
