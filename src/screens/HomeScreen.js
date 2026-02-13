@@ -10,7 +10,7 @@ import {
 import {useAuth} from '../context/AuthContext';
 import {getFincas} from '../services/fincasService';
 
-export default function HomeScreen() {
+export default function HomeScreen({navigation}) {
   const {token, logout} = useAuth();
   const [fincas, setFincas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +40,15 @@ export default function HomeScreen() {
   }, [loadFincas]);
 
   const renderItem = ({item}) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.7}
+      onPress={() =>
+        navigation.navigate('AtlasList', {
+          fincaId: item.id,
+          fincaName: item.name,
+        })
+      }>
       <View style={styles.cardHeader}>
         <Text style={styles.cardName} numberOfLines={1}>
           {item.name}
@@ -53,7 +61,7 @@ export default function HomeScreen() {
         </Text>
       )}
       <Text style={styles.cardCountry}>{item.country}</Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

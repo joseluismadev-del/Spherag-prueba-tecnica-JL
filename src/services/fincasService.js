@@ -11,5 +11,7 @@ export async function getFincas(token) {
     throw new Error(text || `Error ${response.status}`);
   }
 
-  return response.json();
+  const json = await response.json();
+  console.log('=== FINCAS RESPONSE ===', JSON.stringify(json, null, 2));
+  return json;
 }
